@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { CheckBox } from 'react-native-elements'
 import FontAwesome, { Icons } from 'react-native-fontawesome';
-import { ImagePicker} from 'expo';
+import * as ImagePicker from 'expo-image-picker'
 import * as Permissions from 'expo-permissions'
 import Axios from 'axios';
 import colors from '../styles/colors';
@@ -24,14 +24,14 @@ import RoundedButton from '../components/buttons/RoundedButton';
 export default class CreateToken extends Component {
     constructor(props) {
         super(props)
-        this.ServerURL = "http://10.196.113.26:3000"
     }
     state = {
         image: null,
         uploading: false,
         checked: false,
         data: "",
-        id: ""
+        id: "",
+        
     };
 
     render() {
@@ -66,7 +66,7 @@ export default class CreateToken extends Component {
                     //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
                     handleOnPress={this._takePhoto}
                 />
-               
+
 
                 <CheckBox
                     title='Finalize this token'
@@ -90,7 +90,7 @@ export default class CreateToken extends Component {
                 {this._maybeRenderImage()}
                 {this._maybeRenderUploadingOverlay()}
             </View>
-            
+
         );
     }
 
@@ -182,6 +182,7 @@ export default class CreateToken extends Component {
                 aspect: [4, 3],
             });
             //return(pickerResult)
+            console.log('piker result : ' + JSON.stringify(pickerResult))
 
             this._handleImagePicked(pickerResult);
         }
@@ -197,12 +198,12 @@ export default class CreateToken extends Component {
 
             if (!pickerResult.cancelled) {
                 uploadResponse = await uploadImageAsync(pickerResult.uri);
-                var obj = JSON.parse(uploadResponse._bodyInit);
-                console.log(obj)
+                //var obj = JSON.parse(uploadResponse._bodyInit);
+                //console.log(obj)
                 uploadResult = await uploadResponse.json();
                 this.setState({
                     image: uploadResponse.location,
-                    data: obj.file.md5
+                    data: uploadResult.file.md5
                 });
             }
         } catch (e) {
@@ -214,32 +215,37 @@ export default class CreateToken extends Component {
             this.setState({
                 uploading: false,
             });
-            console.log()
+            console.log(this.state.data)
         }
     };
 
     CreateToken = () => {
         data = this.state.data
         finalized = this.state.checked
-        console.log("aaa" + this.state.data)
+        //console.log("aaa" + this.state.data)
         //this._handleImagePicked(this._pickImage);
-        console.log(this.state.data)
-        console.log(`${this.ServerURL}/CreateToken/${data}-${finalized}`)
-        Axios.get(`${this.ServerURL}/CreateToken/${data}-${finalized}`)
+        //console.log(this.state.data)
+        console.log(`${global.ServerURL}/CreateToken/${data}-${finalized}`)
+        
+       Axios.get(`${global.ServerURL}/CreateToken/${global.LoggedUser}-${data}-${finalized}`)
             .then(res => {
                 this.setState({
                     id: res.data.id,
                 });
-                //console.log(JSON.stringify(res))
-            })
-    }
 
-
+                Axios.post(`${global.ServerURL}/EditTokenList`, { TokenId: this.state.id, name: global.LoggedUser })
+                .then(response => {
+                    console.log("this "+response)
+                })
+                alert("Token Created")
+            })   
+        
+}
 }
 
 async function uploadImageAsync(uri) {
-    let apiUrl = `http://10.196.113.26:3000/upload`
-    console.log(apiUrl)
+    let apiUrl = `${global.ServerURL}/upload`
+    //console.log(apiUrl)
     const photo = {
         uri: uri,
         type: 'image/jpeg',
@@ -258,12 +264,19 @@ async function uploadImageAsync(uri) {
         method: 'POST',
     };
 
-    const res = await fetch(apiUrl, options).then((responseData) => {
+    /*fetch(apiUrl, options).then((responseData) => {
         console.log(JSON.stringify(responseData))
-        var obj = JSON.parse(responseData._bodyInit);
-        alert("Hash: " + obj.file.md5);
-    })
-    console.log(JSON.stringify(res))
+        //var obj = JSON.parse(responseData._bodyInit);
+        //alert("Hash: " + obj.file.md5);
+    })*/
+    //console.log(JSON.stringify(res))
+    /*Axios.post(`http://10.196.113.27:3000/upload`, options)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });*/
 
     return fetch(apiUrl, options)
 }
@@ -316,5 +329,4 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     }
 });
-
 

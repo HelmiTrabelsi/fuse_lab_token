@@ -4,6 +4,7 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    Picker
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Header, Input } from 'react-native-elements';
@@ -16,17 +17,20 @@ import RoundedButton from '../components/buttons/RoundedButton';
 export default class DeleteToken extends Component {
     constructor(props) {
         super(props)
-        this.ServerURL = "http://10.196.113.16:3000"
         this.state = {
             TokenID: '',
             User: '',
             value: 0,
             hasCameraPermission: null,
             scanned: false,
+            TokenList: [],
 
 
         }
     }
+    componentDidMount() {
+        this.GetTokenList()
+     }
 
     render() {
 
@@ -35,27 +39,18 @@ export default class DeleteToken extends Component {
             <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : null} keyboardVerticalOffset={220} >
                 <ScrollView  >
 
-                    <Input
-                        //style={styles.textInput}
-                        placeholder='    Token Id'
-                        onChangeText={
-                            (TokenID) => this.setState({ TokenID })}
-                        leftIcon={
-                            <Icon
-                                name='money'
-                                size={24}
-                                color='black'
-                            />
+                <Picker
+                        selectedValue={this.state.TokenID}
+                        style={{ height: 50, width: 350, borderColor:"#6503A6"}}
+                        onValueChange={(itemValue, itemIndex) => {
+                            this.setState({ TokenID: itemValue })
                         }
-                    />
 
-                    <RoundedButton
-                        text="Read QR Code"
-                        textColor={colors.white}
-                        background={colors.blue2}
-                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                        handleOnPress={this.QrCode}
-                    />
+                        }>
+                        {this.state.TokenList.map((item, index) => {
+                            return (<Picker.Item label={item} value={item} key={index} />)
+                        })}
+                    </Picker>
 
                     <RoundedButton
                         text="Finalize Token"
@@ -65,13 +60,12 @@ export default class DeleteToken extends Component {
                         handleOnPress={this.FinalizeToken}
                     />
 
-
                 </ScrollView>
             </KeyboardAvoidingView>
            
         );
     }
-    onSelect = TokenID => {
+    /*onSelect = TokenID => {
         this.setState(TokenID);
         //console.log(TokenID.TokenID.data)
     };
@@ -80,14 +74,24 @@ export default class DeleteToken extends Component {
 
         this.props.navigation.navigate("QrCode", { onSelect: this.onSelect });
 
+    }*/
+    GetTokenList = () => {
+        Axios.get(`${global.ServerURL}/GetTokenList/${global.LoggedUser}`)
+            .then(res => {
+                console.log(res.data)
+                this.setState({
+                    TokenList: res.data
+                })
+            })
     }
+
     FinalizeToken = () => {
 
         console.log(this.state.TokenID)
         console.log(typeof (this.state.TokenID))
         TokenID = this.state.TokenID
-        console.log(`${this.ServerURL}/FinalizeToken/${TokenID}`)
-        Axios.get(`${this.ServerURL}/FinalizeToken/${TokenID}`)
+        console.log(`${global.ServerURL}/FinalizeToken/${TokenID}`)
+        Axios.get(`${global.ServerURL}/FinalizeToken/${global.LoggedUser}-${TokenID}`)
             .then(res => {
                 alert("Finalized Token")
             })

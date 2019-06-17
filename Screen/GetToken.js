@@ -3,11 +3,11 @@ import {
 
     StyleSheet,
     Text,
-
     ScrollView,
     KeyboardAvoidingView,
     Platform,
-
+    Picker,
+    Image
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Header, Input } from 'react-native-elements';
@@ -17,56 +17,69 @@ import RoundedButton from '../components/buttons/RoundedButton';
 
 
 
+
 export default class GetToken extends Component {
     constructor(props) {
         super(props)
-        this.ServerURL = "http://10.196.113.26:3000"
+        
         this.state = {
             TokenID: '',
             hasCameraPermission: null,
             scanned: false,
-            token: {}
-
-
+            token: {},
+            user: global.LoggedUser,
+            TokenList: [],
+            selectedToken: "",
+            imageURL: ""
         }
     }
 
-    render() {
+    componentDidMount() {
+        this.GetTokenList()
+     }
 
+    render() {
+        if (this.state.imageURL != "") {
+            var image= <Image
+                style={{ width: 300, height: 190 }}
+                source={{
+                    uri:
+                        this.state.imageURL,
+                }}
+            />
+        }
 
         return (
+            /*<Input
+            //style={styles.textInput}
+            placeholder='    Token Id'
+            onChangeText={
+                (TokenID) => this.setState({ TokenID })}
+            leftIcon={
+                <Icon
+                    name='money'
+                    size={24}
+                    color='black'
+                />
+            }
+        />*/
             <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : null} keyboardVerticalOffset={220} >
                 <ScrollView  >
 
-                    <Input
-                        //style={styles.textInput}
-                        placeholder='    Token Id'
-                        onChangeText={
-                            (TokenID) => this.setState({ TokenID })}
-                        leftIcon={
-                            <Icon
-                                name='money'
-                                size={24}
-                                color='black'
-                            />
+
+                    <Picker
+                        selectedValue={this.state.TokenID}
+                        style={{ height: 50, width: 350, borderColor:"#6503A6"}}
+                        onValueChange={(itemValue, itemIndex) => {
+                            this.setState({ TokenID: itemValue })
                         }
-                    />
 
-                    <RoundedButton
-                        text="Read QR Code"
-                        textColor={colors.white}
-                        background={colors.blue2}
-                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                        handleOnPress={this.QrCode}
-                    />
+                        }>
+                        {this.state.TokenList.map((item, index) => {
+                            return (<Picker.Item label={item} value={item} key={index} />)
+                        })}
+                    </Picker>
 
-                    <RoundedButton
-                        text="GetToken"
-                        textColor={colors.white}
-                        background={colors.blue2}
-                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                        handleOnPress={this.GetToken}
-                    />
                     <Text>
                         Id : {this.state.token.id}
                     </Text>
@@ -89,12 +102,25 @@ export default class GetToken extends Component {
                         Output : {JSON.stringify(this.state.token.output)}
                     </Text>
 
+                    {image}
+                    <RoundedButton
+                        text="GetToken"
+                        textColor={colors.white}
+                        background={colors.blue2}
+                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
+                        handleOnPress={this.GetToken}
+                    />
+
+
+
+
+
                 </ScrollView>
             </KeyboardAvoidingView>
 
         );
     }
-    onSelect = TokenID => {
+    /*onSelect = TokenID => {
         this.setState(TokenID);
         //console.log(TokenID.TokenID.data)
     };
@@ -103,7 +129,27 @@ export default class GetToken extends Component {
 
         this.props.navigation.navigate("QrCode", { onSelect: this.onSelect });
 
+    }*/
+
+    GetTokenList = () => {
+        Axios.get(`${global.ServerURL}/GetTokenList/${this.state.user}`)
+            .then(res => {
+                //console.log(res.data)
+                this.setState({
+                    TokenList: res.data
+                })
+                Axios.get(`${global.ServerURL}/GetAuthTokenList/${this.state.user}`)
+                .then(res1 => {
+                    //console.log(res.data)
+                   NewList=this.state.TokenList.concat(res1.data)
+
+                   this.setState({
+                    TokenList: NewList
+                })
+                })
+            })
     }
+
     GetToken = () => {
 
         // const { navigation } = this.props
@@ -112,21 +158,18 @@ export default class GetToken extends Component {
         console.log(this.state.TokenID)
         console.log(typeof (this.state.TokenID))
         TokenID = this.state.TokenID
-        Axios.get(`${this.ServerURL}/GetToken/${TokenID}`)
+        Axios.get(`${global.ServerURL}/GetToken/${global.LoggedUser}-${TokenID}`)
             .then(res => {
-                console.log(JSON.stringify(res.data))
+                //console.log(JSON.stringify(res.data))
                 this.setState({
                     token: res.data
                 })
-                console.log(this.state.token)
+                this.setState({
+                    imageURL: `${global.ServerURL}/image/${this.state.token.data}`
+                })
+                console.log(this.state.token)  
+
             })
-        /*Axios.get(`${this.ServerURL}/image/${TokenID}`)
-            .then(res => {
-                console.log(JSON.stringify(res.data))
-                this.setState({
-                    token: res.data
-                })
-            })*/
     }
 
 }

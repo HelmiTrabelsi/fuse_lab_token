@@ -3,6 +3,7 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    Text,
 } from 'react-native';
 import colors from '../styles/colors';
 import RoundedButton from '../components/buttons/RoundedButton';
@@ -50,12 +51,20 @@ export default class App extends Component {
                         //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
                         handleOnPress={this.GetToken}
                     />
+                    <RoundedButton
+                        text="Add Input"
+                        textColor={colors.white}
+                        background={colors.blue2}
+                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
+                        handleOnPress={this.AddInput}
+                    />
+
 
 
                 </ScrollView>
 
             </KeyboardAvoidingView>
-            
+
         );
     }
 
@@ -75,6 +84,9 @@ export default class App extends Component {
     }
     GetToken = () => {
         this.props.navigation.navigate('GetToken')
+    }
+    AddInput = () => {
+        this.props.navigation.navigate('AddInput')
     }
 
 }

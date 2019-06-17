@@ -5,6 +5,7 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    Picker
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Header, Input, Button } from 'react-native-elements';
@@ -18,49 +19,50 @@ import RoundedButton from '../components/buttons/RoundedButton';
 export default class GiveConsent extends Component {
     constructor(props) {
         super(props)
-        this.ServerURL = "http://10.196.113.26:3000"
         this.state = {
             TokenID: '',
             User: '',
             value: 0,
             hasCameraPermission: null,
             scanned: false,
-            selected: false
+            selected: false,
+            user: global.LoggedUser,
+            TokenList: [],
         }
     }
 
     async componentDidMount() {
-        const { status } = await Permissions.askAsync(Permissions.CAMERA);
-        this.setState({ hasCameraPermission: status === 'granted' });
+        //const { status } = await Permissions.askAsync(Permissions.CAMERA);
+        // this.setState({ hasCameraPermission: status === 'granted' });
+        this.GetTokenList()
     }
 
     render() {
-        const { hasCameraPermission, scanned } = this.state;
-
-        if (hasCameraPermission === null) {
-            return <Text>Requesting for camera permission</Text>;
-        }
-        if (hasCameraPermission === false) {
-            return <Text>No access to camera</Text>;
-        }
+        /* const { hasCameraPermission, scanned } = this.state;
+ 
+         if (hasCameraPermission === null) {
+             return <Text>Requesting for camera permission</Text>;
+         }
+         if (hasCameraPermission === false) {
+             return <Text>No access to camera</Text>;
+         }*/
 
         return (
             <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : null} keyboardVerticalOffset={220} >
                 <ScrollView  >
-
-                    <Input
-                        //style={styles.textInput}
-                        placeholder='    Token Id'
-                        onChangeText={
-                            (TokenID) => this.setState({ TokenID })}
-                        leftIcon={
-                            <Icon
-                                name='money'
-                                size={24}
-                                color='black'
-                            />
+                    <Picker
+                        selectedValue={this.state.TokenID}
+                        style={{ height: 50, width: 350, borderColor: "#6503A6" }}
+                        onValueChange={(itemValue, itemIndex) => {
+                            this.setState({ TokenID: itemValue })
                         }
-                    />
+
+                        }>
+                        {this.state.TokenList.map((item, index) => {
+                            return (<Picker.Item label={item} value={item} key={index} />)
+                        })}
+                    </Picker>
+
 
                     <Input
                         placeholder='    User'
@@ -91,13 +93,7 @@ export default class GiveConsent extends Component {
                         rightButtonBackgroundColor='#6503A6'
                         leftButtonBackgroundColor='#6503A6' />
 
-                    <RoundedButton
-                        text="Read QR Code"
-                        textColor={colors.white}
-                        background={colors.blue2}
-                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                        handleOnPress={this.QrCode}
-                    />
+
 
                     <RoundedButton
                         text="Give Consent"
@@ -110,11 +106,11 @@ export default class GiveConsent extends Component {
 
                 </ScrollView>
             </KeyboardAvoidingView>
-           
+
         );
     }
 
-    onSelect = TokenID => {
+    /*onSelect = TokenID => {
         this.setState(TokenID);
         //console.log(TokenID.TokenID.data)
     };
@@ -123,20 +119,36 @@ export default class GiveConsent extends Component {
 
         this.props.navigation.navigate("QrCode", { onSelect: this.onSelect });
 
+    }*/
+
+    GetTokenList = () => {
+        Axios.get(`${global.ServerURL}/GetTokenList/${this.state.user}`)
+            .then(res => {
+                console.log(res.data)
+                this.setState({
+                    TokenList: res.data
+                })
+            })
     }
+
     GiveConsent = () => {
 
         // const { navigation } = this.props
         //data=navigation.getParam('data')
         //const TokenID = TokenID.data
-        console.log(this.state.TokenID)
-        console.log(typeof (this.state.TokenID))
+        //console.log(this.state.TokenID)
+        //console.log(typeof (this.state.TokenID))
         TokenID = this.state.TokenID
         User = this.state.User
         value = this.state.value
-        Axios.get(`${this.ServerURL}/GiveConsent/${TokenID}-${User}-${value}`)
+        Axios.get(`${global.ServerURL}/GiveConsent/${global.LoggedUser}-${TokenID}-${User}-${value}`)
             .then(res => {
-                alert("validated consent")
+                console.log(User)
+                console.log(TokenID)
+                Axios.post(`${global.ServerURL}/AddAuthTokenList`, { name: User , TokenId:TokenID})
+                .then(res => {
+                    alert("validated consent")
+                })
             })
 
     }

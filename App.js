@@ -1,15 +1,16 @@
 import React, { Component } from 'react';
 import { Header } from 'react-native-elements';
 import { createStackNavigator, createAppContainer } from 'react-navigation'
-import  CreateToken from  "./Screen/CreateToken"
-import  Home from  "./Screen/Home"
-import  GiveConsent from  "./Screen/GiveConsent"
-import  QrCode from  "./Screen/QrCode"
-import  DeleteToken from  "./Screen/DeleteToken"
-import  FinalizeToken from  "./Screen/FinalizeToken"
-import  GetToken from  "./Screen/GetToken"
-import  Login from  "./Screen/Login"
-
+import CreateToken from "./Screen/CreateToken"
+import Home from "./Screen/Home"
+import GiveConsent from "./Screen/GiveConsent"
+import QrCode from "./Screen/QrCode"
+import DeleteToken from "./Screen/DeleteToken"
+import FinalizeToken from "./Screen/FinalizeToken"
+import GetToken from "./Screen/GetToken"
+import Login from "./Screen/Login"
+import CreateAccount from './Screen/CreateAccount'
+import AddInput from './Screen/AddInput'
 
 const CustomHeader = () => (
   <Header
@@ -21,14 +22,22 @@ const CustomHeader = () => (
 );
 
 const Application = createStackNavigator({
-  /*Home1: {
+  Home1: {
     screen: Login,
     navigationOptions: () => {
       return {
         header: <CustomHeader />,
       };
     },
-  },*/
+  },
+  CreateAccount: {
+    screen: CreateAccount,
+    navigationOptions: () => {
+      return {
+        header: <CustomHeader />,
+      };
+    },
+  },
   Home: {
     screen: Home,
     navigationOptions: () => {
@@ -90,16 +99,25 @@ const Application = createStackNavigator({
       };
     },
   },
-  
+  AddInput: {
+    screen: AddInput,
+    navigationOptions: () => {
+      return {
+        header: <CustomHeader />,
+      };
+    },
+  },
+
 });
 const Appli = createAppContainer(Application);
- class App extends Component {
+class App extends Component {
+
   render() {
     return (
       <Application />
     );
   }
- }
+}
 
 
 
