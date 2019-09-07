@@ -5,16 +5,37 @@ import {
     KeyboardAvoidingView,
     Platform,
     Picker,
+    View,
+    Text
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import { Header, Input } from 'react-native-elements';
 import Axios from 'axios';
 import colors from '../styles/colors';
 import RoundedButton from '../components/buttons/RoundedButton';
-
+import NavBarButton from '../components/buttons/NavBarButton';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import transparentHeaderStyle from '../styles/navigation';
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 
 export default class DeleteToken extends Component {
+    static navigationOptions = ({ navigation }) => ({
+        /*headerRight: <NavBarButton
+          handleButtonPress={() => navigation.navigate('ForgotPassword')}
+          location="right"
+          color={colors.white}
+          text="Forgot Password"
+        />,*/
+        headerLeft: <NavBarButton
+            handleButtonPress={() => navigation.goBack()}
+            location="left"
+            icon={<Icon name="angle-left" color={colors.blue2} size={30} />}
+        />,
+        headerStyle: transparentHeaderStyle,
+        headerTransparent: false,
+        headerTintColor: colors.blue2,
+        title: 'Delete Token',
+    });
     constructor(props) {
         super(props)
         this.state = {
@@ -24,13 +45,15 @@ export default class DeleteToken extends Component {
             hasCameraPermission: null,
             scanned: false,
             TokenList: [],
+            showAlert: false
+
 
         }
     }
 
     componentDidMount() {
         this.GetTokenList()
-     }
+    }
 
     render() {
 
@@ -60,39 +83,76 @@ export default class DeleteToken extends Component {
             <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : null} keyboardVerticalOffset={220} >
                 <ScrollView  >
 
+                    <View style={styles.ViewWrapper}>
+                        <Text style={styles.loginHeader}>
+                            Delete Token
+                        </Text>
+                        <Text style={{ fontSize: 18, color: colors.blue2, fontWeight: '700', marginBottom: 20 }}>
+                            Token Id
+            </Text>
+                        <Picker
+                            selectedValue={this.state.TokenID}
+                            style={{ height: 50, width: 350, borderColor: "#6503A6" }}
+                            onValueChange={(itemValue, itemIndex) => {
+                                this.setState({ TokenID: itemValue })
+                            }
 
-                <Picker
-                        selectedValue={this.state.TokenID}
-                        style={{ height: 50, width: 350, borderColor:"#6503A6"}}
-                        onValueChange={(itemValue, itemIndex) => {
-                            this.setState({ TokenID: itemValue })
-                        }
+                            }>
+                            {this.state.TokenList.map((item, index) => {
+                                return (<Picker.Item label={item} value={item} key={index} />)
+                            })}
+                        </Picker>
 
-                        }>
-                        {this.state.TokenList.map((item, index) => {
-                            return (<Picker.Item label={item} value={item} key={index} />)
-                        })}
-                    </Picker>
-
-
-                    <RoundedButton
-                        text="Delete Token"
-                        textColor={colors.white}
-                        background={colors.blue2}
-                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                        handleOnPress={this.DeleteToken}
+                        <View style={{ marginTop: 230 }}>
+                            <RoundedButton
+                                text="Delete Token"
+                                textColor={colors.white}
+                                background={colors.blue2}
+                                //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
+                                handleOnPress={this.DeleteToken}
+                            />
+                        </View>
+                    </View>
+                    <AwesomeAlert
+                        show={this.state.showAlert}
+                        showProgress={false}
+                        title="Token Deleted"
+                        message="The Token is deleted successfully"
+                        closeOnTouchOutside={true}
+                        closeOnHardwareBackPress={false}
+                        showCancelButton={false}
+                        showConfirmButton={true}
+                        //cancelText="No, cancel"
+                        confirmText="OK"
+                        confirmButtonColor={colors.blue2}
+                        //onCancelPressed={() => {
+                        //   this.hideAlert();
+                        //}}
+                        onConfirmPressed={() => {
+                            this.hideAlert();
+                        }}
                     />
-
-
                 </ScrollView>
-            </KeyboardAvoidingView>
+            </KeyboardAvoidingView >
 
         );
     }
+    showAlert = () => {
+        this.setState({
+            showAlert: true
+        });
+    };
+
+    hideAlert = () => {
+        this.setState({
+            showAlert: false
+        });
+    };
     GetTokenList = () => {
+        console.log(`${global.ServerURL}/GetTokenList/${global.LoggedUser}`)
         Axios.get(`${global.ServerURL}/GetTokenList/${global.LoggedUser}`)
             .then(res => {
-                console.log(res.data)
+                console.log("Hi" + res.data)
                 this.setState({
                     TokenList: res.data
                 })
@@ -121,9 +181,9 @@ export default class DeleteToken extends Component {
         Axios.get(`${global.ServerURL}/deleteToken/${global.LoggedUser}-${TokenID}`)
             .then(res => {
                 Axios.post(`${global.ServerURL}/DeleteToken`, { TokenId: this.state.TokenID, name: this.state.user })
-                .then(res => {
-                    alert("Deleted")
-                })
+                    .then(res => {
+                        this.showAlert();
+                    })
             })
 
     }
@@ -173,7 +233,24 @@ const styles = StyleSheet.create({
     maybeRenderImageText: {
         paddingHorizontal: 10,
         paddingVertical: 10,
-    }
+    },
+    ViewWrapper: {
+        marginTop: 30,
+        padding: 0,
+        //  position: 'absolute',
+        left: 0,
+        right: 0,
+        // top: 0,
+        //bottom: 0,
+        marginLeft: 20,
+        marginRight: 20,
+    },
+    loginHeader: {
+        fontSize: 30,
+        color: colors.blue2,
+        fontWeight: '300',
+        marginBottom: 60,
+    },
 });
 
 

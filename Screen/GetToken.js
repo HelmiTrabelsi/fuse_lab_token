@@ -7,26 +7,45 @@ import {
     KeyboardAvoidingView,
     Platform,
     Picker,
-    Image
+    Image,
+    View
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import { Header, Input } from 'react-native-elements';
 import Axios from 'axios';
 import colors from '../styles/colors';
 import RoundedButton from '../components/buttons/RoundedButton';
-
+import NavBarButton from '../components/buttons/NavBarButton';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import transparentHeaderStyle from '../styles/navigation';
 
 
 
 export default class GetToken extends Component {
+    static navigationOptions = ({ navigation }) => ({
+        /*headerRight: <NavBarButton
+          handleButtonPress={() => navigation.navigate('ForgotPassword')}
+          location="right"
+          color={colors.white}
+          text="Forgot Password"
+        />,*/
+        headerLeft: <NavBarButton
+            handleButtonPress={() => navigation.goBack()}
+            location="left"
+            icon={<Icon name="angle-left" color={colors.blue2} size={30} />}
+        />,
+        headerStyle: transparentHeaderStyle,
+        headerTransparent: false,
+        headerTintColor: colors.blue2,
+        title: 'Get Token',
+    });
     constructor(props) {
         super(props)
-        
+
         this.state = {
             TokenID: '',
             hasCameraPermission: null,
             scanned: false,
-            token: {},
+            token: null,
             user: global.LoggedUser,
             TokenList: [],
             selectedToken: "",
@@ -36,17 +55,44 @@ export default class GetToken extends Component {
 
     componentDidMount() {
         this.GetTokenList()
-     }
+    }
 
     render() {
         if (this.state.imageURL != "") {
-            var image= <Image
+            var image = <Image
                 style={{ width: 300, height: 190 }}
                 source={{
                     uri:
                         this.state.imageURL,
                 }}
             />
+        }
+        if (this.state.token != null) {
+            console.log(this.state.token)
+            var view = <View style={{ marginBottom: 50, marginTop: 20 }}>
+                <Text style={styles.TextStyle}>
+                    Id : {this.state.token.id}
+                </Text>
+                <Text style={styles.TextStyle}>
+                    Creation date : {this.state.token.Creation_date}
+                </Text>
+                <Text style={styles.TextStyle}>
+                    Data Hash : {this.state.token.data}
+                </Text>
+                <Text style={styles.TextStyle}>
+                    Creator : {this.state.token.creator}
+                </Text>
+                <Text style={styles.TextStyle}>
+                    Finalized : {JSON.stringify(this.state.token.Finalized)}
+                </Text>
+                <Text style={styles.TextStyle}>
+                    Input : {JSON.stringify(this.state.token.input)}
+                </Text>
+                <Text style={styles.TextStyle}>
+                    Output : {JSON.stringify(this.state.token.output)}
+                </Text>
+            </View>
+
         }
 
         return (
@@ -65,56 +111,40 @@ export default class GetToken extends Component {
         />*/
             <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : null} keyboardVerticalOffset={220} >
                 <ScrollView  >
+                    <View style={styles.ViewWrapper}>
+                        <Text style={styles.loginHeader}>
+                            Get Token
+                        </Text>
+                        <Text style={{ fontSize: 18, color: colors.blue2, fontWeight: '700', marginBottom: 20 }}>
+                            Token Id
+            </Text>
 
+                        <Picker
+                            selectedValue={this.state.TokenID}
+                            style={{ height: 50, width: 350, borderColor: "#6503A6" }}
+                            onValueChange={(itemValue, itemIndex) => {
+                                this.setState({ TokenID: itemValue })
+                            }
 
-                    <Picker
-                        selectedValue={this.state.TokenID}
-                        style={{ height: 50, width: 350, borderColor:"#6503A6"}}
-                        onValueChange={(itemValue, itemIndex) => {
-                            this.setState({ TokenID: itemValue })
-                        }
+                            }>
+                            {this.state.TokenList.map((item, index) => {
+                                return (<Picker.Item label={item} value={item} key={index} />)
+                            })}
+                        </Picker>
+                        {image}
+                        {view}
 
-                        }>
-                        {this.state.TokenList.map((item, index) => {
-                            return (<Picker.Item label={item} value={item} key={index} />)
-                        })}
-                    </Picker>
+                        <View style={{ marginTop: 230 }}>
+                            <RoundedButton
+                                text="GetToken"
+                                textColor={colors.white}
+                                background={colors.blue2}
+                                //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
+                                handleOnPress={this.GetToken}
+                            />
+                        </View>
 
-                    <Text>
-                        Id : {this.state.token.id}
-                    </Text>
-                    <Text>
-                        Creation date : {this.state.token.Creation_date}
-                    </Text>
-                    <Text>
-                        Data Hash : {this.state.token.data}
-                    </Text>
-                    <Text>
-                        Creator : {this.state.token.creator}
-                    </Text>
-                    <Text>
-                        Finalized : {JSON.stringify(this.state.token.Finalized)}
-                    </Text>
-                    <Text>
-                        Input : {JSON.stringify(this.state.token.input)}
-                    </Text>
-                    <Text>
-                        Output : {JSON.stringify(this.state.token.output)}
-                    </Text>
-
-                    {image}
-                    <RoundedButton
-                        text="GetToken"
-                        textColor={colors.white}
-                        background={colors.blue2}
-                        //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                        handleOnPress={this.GetToken}
-                    />
-
-
-
-
-
+                    </View>
                 </ScrollView>
             </KeyboardAvoidingView>
 
@@ -139,14 +169,14 @@ export default class GetToken extends Component {
                     TokenList: res.data
                 })
                 Axios.get(`${global.ServerURL}/GetAuthTokenList/${this.state.user}`)
-                .then(res1 => {
-                    //console.log(res.data)
-                   NewList=this.state.TokenList.concat(res1.data)
+                    .then(res1 => {
+                        //console.log(res.data)
+                        NewList = this.state.TokenList.concat(res1.data)
 
-                   this.setState({
-                    TokenList: NewList
-                })
-                })
+                        this.setState({
+                            TokenList: NewList
+                        })
+                    })
             })
     }
 
@@ -167,7 +197,7 @@ export default class GetToken extends Component {
                 this.setState({
                     imageURL: `${global.ServerURL}/image/${this.state.token.data}`
                 })
-                console.log(this.state.token)  
+                console.log(this.state.token)
 
             })
     }
@@ -217,7 +247,30 @@ const styles = StyleSheet.create({
     maybeRenderImageText: {
         paddingHorizontal: 10,
         paddingVertical: 10,
-    }
+    },
+    TextStyle: {
+        fontSize: 14,
+        color: colors.blue2,
+        fontWeight: '500',
+        marginBottom: 10
+    },
+    ViewWrapper: {
+        marginTop: 30,
+        padding: 0,
+        //  position: 'absolute',
+        left: 0,
+        right: 0,
+        // top: 0,
+        //bottom: 0,
+        marginLeft: 20,
+        marginRight: 20,
+    },
+    loginHeader: {
+        fontSize: 30,
+        color: colors.blue2,
+        fontWeight: '300',
+        marginBottom: 30,
+    },
 });
 
 

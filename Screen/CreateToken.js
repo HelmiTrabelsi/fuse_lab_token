@@ -8,6 +8,10 @@ import {
     StyleSheet,
     Text,
     View,
+    KeyboardAvoidingView,
+    ScrollView,
+    Platform,
+
 
 } from 'react-native';
 import { CheckBox } from 'react-native-elements'
@@ -17,11 +21,29 @@ import * as Permissions from 'expo-permissions'
 import Axios from 'axios';
 import colors from '../styles/colors';
 import RoundedButton from '../components/buttons/RoundedButton';
-
-
-
+import NavBarButton from '../components/buttons/NavBarButton';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import transparentHeaderStyle from '../styles/navigation';
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 export default class CreateToken extends Component {
+    static navigationOptions = ({ navigation }) => ({
+        /*headerRight: <NavBarButton
+          handleButtonPress={() => navigation.navigate('ForgotPassword')}
+          location="right"
+          color={colors.white}
+          text="Forgot Password"
+        />,*/
+        headerLeft: <NavBarButton
+            handleButtonPress={() => navigation.goBack()}
+            location="left"
+            icon={<Icon name="angle-left" color={colors.blue2} size={30} />}
+        />,
+        headerStyle: transparentHeaderStyle,
+        headerTransparent: false,
+        headerTintColor: colors.blue2,
+        title: 'Create Token',
+    });
     constructor(props) {
         super(props)
     }
@@ -31,7 +53,8 @@ export default class CreateToken extends Component {
         checked: false,
         data: "",
         id: "",
-        
+        showAlert: false
+
     };
 
     render() {
@@ -43,56 +66,101 @@ export default class CreateToken extends Component {
 
 
         return (
-            <View style={styles.container}>
-                <StatusBar barStyle="default" />
+            <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : null} keyboardVerticalOffset={220} >
+                <ScrollView  >
 
-                <Text
-                    style={styles.exampleText}>
-                    Example: Demo App
-        </Text>
-                <RoundedButton
-                    text="Pick an image from camera roll"
-                    textColor={colors.white}
-                    background={colors.blue2}
-                    //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                    handleOnPress={this._pickImage}
-                />
+                    <StatusBar barStyle="default" />
 
-
-                <RoundedButton
-                    text="Take a photo"
-                    textColor={colors.white}
-                    background={colors.blue2}
-                    //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                    handleOnPress={this._takePhoto}
-                />
+                    <View style={styles.ViewWrapper}>
+                        <Text style={styles.loginHeader}>
+                            Create a Token
+                    </Text>
+                        <RoundedButton
+                            text="Pick an image from camera roll"
+                            textColor={colors.blue2}
+                            background={colors.white}
+                            borderColor={colors.blue2}
+                            //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
+                            handleOnPress={this._pickImage}
+                        />
 
 
-                <CheckBox
-                    title='Finalize this token'
-                    checked={this.state.checked}
-                    onIconPress={this.checked}
-                    checkedIcon="check"
+                        <RoundedButton
+                            text="Take a photo"
+                            textColor={colors.blue2}
+                            background={colors.white}
+                            borderColor={colors.blue2}
+                            //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
+                            handleOnPress={this._takePhoto}
+                        />
 
-                    uncheckedIcon={Icons.clear}
-                    onPress={this.checked}
-                />
-                <RoundedButton
-                    text="Create Token"
-                    textColor={colors.white}
-                    background={colors.blue2}
-                    //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
-                    handleOnPress={this.CreateToken}
-                />
+                        <View style={{ marginTop: 50 }}>
+                            <CheckBox
+                                title='Finalize this token'
+                                checked={this.state.checked}
+                                onIconPress={this.checked}
+                                checkedIcon="check"
+                                uncheckedIcon={Icons.clear}
+                                onPress={this.checked}
+
+                            />
+                        </View>
+                        <View style={{ marginTop: 90 }}>
+                            <RoundedButton
+                                text="Create Token"
+                                textColor={colors.white}
+                                background={colors.blue2}
+                                //icon={<Icon name="facebook" size={20} style={styles.facebookButtonIcon} />}
+                                handleOnPress={this.CreateToken}
+                            />
+                        </View>
+
+
+                        {this._maybeRenderImage()}
+                        {this._maybeRenderUploadingOverlay()}
+                    </View>
+                    <AwesomeAlert
+                        show={this.state.showAlert}
+                        showProgress={false}
+                        title="Token Created"
+                        message="The Token is created successfully"
+                        closeOnTouchOutside={true}
+                        closeOnHardwareBackPress={false}
+                        showCancelButton={false}
+                        showConfirmButton={true}
+                        //cancelText="No, cancel"
+                        confirmText="OK"
+                        confirmButtonColor={colors.blue2}
+                        //onCancelPressed={() => {
+                        //   this.hideAlert();
+                        //}}
+                        onConfirmPressed={() => {
+                            this.hideAlert();
+                        }}
+                    />
 
 
 
-                {this._maybeRenderImage()}
-                {this._maybeRenderUploadingOverlay()}
-            </View>
+
+                </ScrollView>
+
+            </KeyboardAvoidingView>
 
         );
     }
+
+    showAlert = () => {
+        this.setState({
+            showAlert: true
+        });
+    };
+
+    hideAlert = () => {
+        this.setState({
+            showAlert: false
+        });
+    };
+
 
     checked = () => {
         this.setState({ checked: !this.state.checked })
@@ -226,21 +294,39 @@ export default class CreateToken extends Component {
         //this._handleImagePicked(this._pickImage);
         //console.log(this.state.data)
         console.log(`${global.ServerURL}/CreateToken/${data}-${finalized}`)
-        
-       Axios.get(`${global.ServerURL}/CreateToken/${global.LoggedUser}-${data}-${finalized}`)
-            .then(res => {
-                this.setState({
-                    id: res.data.id,
-                });
 
-                Axios.post(`${global.ServerURL}/EditTokenList`, { TokenId: this.state.id, name: global.LoggedUser })
-                .then(response => {
-                    console.log("this "+response)
+        try {
+            this.setState({
+                uploading: true,
+            })
+            Axios.get(`${global.ServerURL}/CreateToken/${global.LoggedUser}-${data}-${finalized}`)
+                .then(res => {
+
+                    this.setState({
+                        id: res.data.id,
+
+                    });
+
+                    Axios.post(`${global.ServerURL}/EditTokenList`, { TokenId: this.state.id, name: global.LoggedUser })
+                        .then(response => {
+                            // console.log("this " + response)
+                        })
+                    this.showAlert();
+                    //Alert.alert('Token Created',
+                    //'The Token is created successfully')
+
                 })
-                alert("Token Created")
-            })   
-        
-}
+                .catch(function (error) {
+                    alert(error)
+                })
+
+        } finally {
+            this.setState({
+                uploading: false,
+            })
+        }
+
+    }
 }
 
 async function uploadImageAsync(uri) {
@@ -327,6 +413,23 @@ const styles = StyleSheet.create({
     maybeRenderImageText: {
         paddingHorizontal: 10,
         paddingVertical: 10,
-    }
+    },
+    ViewWrapper: {
+        marginTop: 30,
+        padding: 0,
+        //  position: 'absolute',
+        left: 0,
+        right: 0,
+        // top: 0,
+        //bottom: 0,
+        marginLeft: 20,
+        marginRight: 20,
+    },
+    loginHeader: {
+        fontSize: 30,
+        color: colors.blue2,
+        fontWeight: '300',
+        marginBottom: 50,
+    },
 });
 
